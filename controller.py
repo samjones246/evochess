@@ -119,7 +119,7 @@ def get_board_bits(board : chess.Board):
 # Weights: [[(772,64),(64,)],[(64,1880),(1880,)]]
 def build_model(weights=None):
     inputs = keras.Input(shape=(772,))
-    lh = layers.Dense(64, activation="relu")
+    lh = layers.Dense(16, activation="relu")
     lo = layers.Dense(1880)
     outputs = lo(lh(inputs))
     model = keras.Model(inputs=inputs, outputs=outputs)
@@ -138,3 +138,7 @@ def choose_move(board, model):
         if board.is_legal(move):
             break
     return move
+
+if __name__ == "__main__":
+    model = build_model()
+    model.summary()

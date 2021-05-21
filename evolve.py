@@ -48,9 +48,9 @@ def uniform_crossover(m1, m2, mutate=False, mr=None):
 def gen_individual():
     r = np.random.default_rng()
     weights = np.array([
-        r.random(size=(772,64)) * 10, 
-        np.zeros(shape=(64,)),
-        r.random(size=(64,1880)) * 10, 
+        r.random(size=(772,16)) * 10, 
+        np.zeros(shape=(16,)),
+        r.random(size=(16,1880)) * 10, 
         np.zeros(shape=(1880,))
     ], dtype=object)
     return controller.build_model(weights)
@@ -144,7 +144,7 @@ def best_individual(pop1, fit1, pop2, fit2) -> keras.Model:
     best2 = max(zip(pop2, fit2), key=lambda x: x[1])
     return max(best1, best2, key=lambda x: x[1])[0]
 
-mr = 1/171672
+mr = 1/(44328 - 16 - 1880)
 pop1 = gen_pop(100)
 pop2 = gen_pop(100)
 
