@@ -118,19 +118,13 @@ def get_board_bits(board : chess.Board):
 
 # Weights: [[(772,64),(64,)],[(64,1880),(1880,)]]
 def build_model(weights=None):
-    if weights is None:
-        r = np.random.default_rng()
-        weights = [
-            [r.random(size=(772,64)) * 10, np.zeros(shape=(64,))],
-            [r.random(size=(64,1880)) * 10, np.zeros(shape=(1880,))]
-        ]
     inputs = keras.Input(shape=(772,))
     lh = layers.Dense(64, activation="relu")
     lo = layers.Dense(1880)
     outputs = lo(lh(inputs))
     model = keras.Model(inputs=inputs, outputs=outputs)
-    lh.set_weights(weights[0])
-    lo.set_weights(weights[1])
+    if weights is not None:
+        model.set_weights(weights)
     return model
 
 def choose_move(board, model):
