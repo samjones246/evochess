@@ -46,6 +46,7 @@ def uniform_crossover(m1, m2, mutate=False, mr=None):
     if mutate:
         weights = mutate_weights(weights, mr)
     out.set_weights(weights)
+    out.compile()
     return out
 
 def gen_individual():
@@ -79,7 +80,6 @@ def next_generation(pop, fitnesses, crossover, mr):
         else:
             child = mutate(pop[i], mr)
             new_pop.append(child)
-    print("Crossing")
     if crossover:
         shuffle(new_pop, random=rng.random)
         temp = []
