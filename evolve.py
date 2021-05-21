@@ -1,12 +1,17 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 from random import shuffle
 import random
 import chess
 import numpy as np
 from functools import reduce
+from tensorflow import keras
 from tensorflow.keras.models import clone_model
 import copy
 import controller
 import timeit
+from tqdm import tqdm
+from itertools import count
 
 # Shift random weights by val in range [-1,1]
 
@@ -91,12 +96,13 @@ def play_game(ind, opp):
     next_player = rng.random() < 0.5
     col = chess.WHITE if players[next_player] == ind else chess.BLACK
     board = chess.Board()
-    while not board.is_game_over():
+    for move_num in tqdm(count(0),"Move:",leave=False,unit=""):
         model = players[next_player]
         move = controller.choose_move(board, model)
         board.push(move)
         next_player = not next_player
-    print(board.fen())
+        if board.is_game_over():
+            break
     if board.outcome().winner is not None:
         if board.outcome().winner == col:
             return 1
@@ -108,27 +114,40 @@ def evaluate_individual(ind, pop2, sample_size):
     rng = np.random.default_rng()
     sample = rng.choice(pop2, size=sample_size, replace=False)
     score = 0
-    for opp in sample:
-        score += play_game(ind, opp)
+    for i in tqdm(range(sample_size), "Playing Game", leave=False):
+        opp = sample[i]
+        outcome = play_game(ind, opp)
+        score += outcome
     return score
 
 def evaluate_pops(pop1, pop2, sample_size):
-    fit1 = []
-    for i in range(len(pop1)):
-        fit1.append(evaluate_individual(pop1[i], pop2, sample_size))
-    fit2 = []
-    for i in range(len(pop2)):
-        fit2.append(evaluate_individual(pop2[i], pop1, sample_size))
-    return fit1, fit2
+    fits = []
+    pops = [pop1, pop2]
+    for i in tqdm(range(len(pops)), "Evaluating Population", leave=False):
+        pop = pops[i]
+        fit = []
+        for j in tqdm(range(len(pop)), "Evaluating Individual", leave=False):
+            fit.append(evaluate_individual(pop[j], pops[not i], sample_size))
+        fits.append(fit)
+    return tuple(fits)
 
 def evolve(pop1, pop2, sample_size, mr, crossover, gens):
-    for gen in range(gens):
+    for gen in tqdm(range(gens), "Generation"):
         fit1, fit2 = evaluate_pops(pop1, pop2, sample_size)
         pop1 = next_generation(pop1, fit1, crossover, mr)
         pop2 = next_generation(pop2, fit2, crossover, mr)
-    return pop1, pop2
+    fit1, fit2 = evaluate_pops(pop1, pop2, sample_size)
+    return (pop1,fit1), (pop2,fit2)
+
+def best_individual(pop1, fit1, pop2, fit2) -> keras.Model:
+    best1 = max(zip(pop1, fit1), key=lambda x: x[1])
+    best2 = max(zip(pop2, fit2), key=lambda x: x[1])
+    return max(best1, best2, key=lambda x: x[1])[0]
+
 mr = 1/171672
 pop1 = gen_pop(100)
-fit1 = list(range(100, 1, -1))
-print("Spawning next gen")
-print(timeit.timeit(lambda: next_generation(pop1, fit1, True, mr), number=1))
+pop2 = gen_pop(100)
+
+popfit1, popfit2 = evolve(pop1, pop2, 10, mr, True, 10)
+best = best_individual(popfit1[0], popfit1[1], popfit2[0], popfit2[1])
+best.save("model.h5")
