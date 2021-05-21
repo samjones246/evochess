@@ -115,7 +115,7 @@ def evaluate_individual(ind, pop2, sample_size):
     rng = np.random.default_rng()
     sample = rng.choice(pop2, size=sample_size, replace=False)
     score = 0
-    for i in tqdm(range(sample_size), "Playing Game", leave=False):
+    for i in tqdm(range(sample_size), "Playing Games", leave=False):
         opp = sample[i]
         outcome = play_game(ind, opp)
         score += outcome
@@ -123,9 +123,8 @@ def evaluate_individual(ind, pop2, sample_size):
 
 def evaluate_pops(pop1, pop2, sample_size):
     fits = []
-    pops = []
-    for pop in tqdm([pop1, pop2], "Optimising models", leave=False):
-        pops.append([controller.get_optimised_model(m) for m in pop])
+    pops = [controller.get_optimised_model(m) for m in tqdm(pop1 + pop2, "Optimising models", leave=False)]
+    pops = [pops[:len(pop1)], pops[len(pop1):]]
     for i in tqdm(range(len(pops)), "Evaluating Populations", leave=False):
         pop = pops[i]
         fit = []
