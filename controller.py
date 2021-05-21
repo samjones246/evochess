@@ -4,6 +4,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 import chess
 from functools import reduce
+from litemodel import LiteModel
 
 def pawn_promos(color):
     out = []
@@ -119,18 +120,25 @@ def get_board_bits(board : chess.Board):
 # Weights: [[(772,64),(64,)],[(64,1880),(1880,)]]
 def build_model(weights=None):
     inputs = keras.Input(shape=(772,))
-    lh = layers.Dense(16, activation="relu")
-    lo = layers.Dense(1880)
+    lh = layers.Dense(16, activation="relu", use_bias=False)
+    lo = layers.Dense(1880, use_bias=False)
     outputs = lo(lh(inputs))
     model = keras.Model(inputs=inputs, outputs=outputs)
     if weights is not None:
         model.set_weights(weights)
+    model.compile()
     return model
 
+def get_optimised_model(model):
+    return LiteModel.from_keras_model(model)
+
 def choose_move(board, model):
-    inp = [get_board_bits(board)]
-    out = model.predict(inp)
-    sorted_moves = sorted(zip(out[0], range(1880)), key=lambda x: x[0], reverse=True)
+    #inp = np.array([get_board_bits(board)])
+    #out = model(inp, training=False)
+    #sorted_moves = sorted(zip(out[0], range(1880)), key=lambda x: x[0], reverse=True)
+    inp = get_board_bits(board)
+    out = model.predict_single(inp)
+    sorted_moves = sorted(zip(out, range(1880)), key=lambda x: x[0], reverse=True)
     move = None
     for i in range(1880):
         uci = MOVE_LISTS[board.turn][sorted_moves[i][1]]

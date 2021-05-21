@@ -1,8 +1,11 @@
 import os
+
+from six import b
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 from random import shuffle
 import random
 import chess
+import chess.pgn
 import numpy as np
 from functools import reduce
 from tensorflow import keras
@@ -17,7 +20,7 @@ from itertools import count
 
 def mutate_weights(weights, mr):
     rng = np.random.default_rng()
-    for i in range(0, len(weights), 2):
+    for i in range(len(weights)):
         for j in range(len(weights[i])):
             for k in range(len(weights[i][j])):
                 if rng.random() < mr:
@@ -35,7 +38,7 @@ def uniform_crossover(m1, m2, mutate=False, mr=None):
     weights = m1.get_weights()
     w2 = m2.get_weights()
     rng = np.random.default_rng()
-    for i in range(0, len(weights), 2):
+    for i in range(len(weights)):
         for j in range(len(weights[i])):
             if rng.random() < 0.5:
                 weights[i][j] = np.copy(w2[i][j])
@@ -48,10 +51,8 @@ def uniform_crossover(m1, m2, mutate=False, mr=None):
 def gen_individual():
     r = np.random.default_rng()
     weights = np.array([
-        r.random(size=(772,16)) * 10, 
-        np.zeros(shape=(16,)),
-        r.random(size=(16,1880)) * 10, 
-        np.zeros(shape=(1880,))
+        r.random(size=(772,16)) * 10,
+        r.random(size=(16,1880)) * 10,
     ], dtype=object)
     return controller.build_model(weights)
 
@@ -122,17 +123,19 @@ def evaluate_individual(ind, pop2, sample_size):
 
 def evaluate_pops(pop1, pop2, sample_size):
     fits = []
-    pops = [pop1, pop2]
-    for i in tqdm(range(len(pops)), "Evaluating Population", leave=False):
+    pops = []
+    for pop in tqdm([pop1, pop2], "Optimising models", leave=False):
+        pops.append([controller.get_optimised_model(m) for m in pop])
+    for i in tqdm(range(len(pops)), "Evaluating Populations", leave=False):
         pop = pops[i]
         fit = []
-        for j in tqdm(range(len(pop)), "Evaluating Individual", leave=False):
+        for j in tqdm(range(len(pop)), "Evaluating Individuals", leave=False):
             fit.append(evaluate_individual(pop[j], pops[not i], sample_size))
         fits.append(fit)
     return tuple(fits)
 
 def evolve(pop1, pop2, sample_size, mr, crossover, gens):
-    for gen in tqdm(range(gens), "Generation"):
+    for gen in tqdm(range(gens), "Evolving"):
         fit1, fit2 = evaluate_pops(pop1, pop2, sample_size)
         pop1 = next_generation(pop1, fit1, crossover, mr)
         pop2 = next_generation(pop2, fit2, crossover, mr)
