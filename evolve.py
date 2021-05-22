@@ -73,6 +73,8 @@ def next_generation(pop, fitnesses, crossover, mr):
     new_pop = []
     for pointer in tqdm(pointers, "Choosing parents", leave=False):
         i = 0
+        if sum(fitnesses) < pointer:
+            print("Something went wrong")
         while sum(fitnesses[:i+1]) < pointer:
             i += 1
         if crossover:
