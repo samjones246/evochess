@@ -154,6 +154,6 @@ mr = 1/44328
 pop1 = gen_pop(100)
 pop2 = gen_pop(100)
 
-popfit1, popfit2 = evolve(pop1, pop2, 10, mr, True, 10)
+popfit1, popfit2 = evolve(pop1, pop2, 10, mr, True, 1000)
 best = best_individual(popfit1[0], popfit1[1], popfit2[0], popfit2[1])
 best.save("model.h5")
