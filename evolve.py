@@ -95,6 +95,11 @@ def next_generation(pop, fitnesses, crossover, mr):
         new_pop = temp
     return new_pop
 
+def material_advantage(board : chess.Board, col):
+    pieces = zip(chess.PIECE_TYPES, [1, 3, 3, 5, 9, 0])
+    score = sum([(len(board.pieces(t, col)) - len(board.pieces(t, not col))) * val for t, val in pieces])
+    return score
+
 def play_game(ind, opp):
     rng = np.random.default_rng()
     players = [ind, opp]
@@ -108,12 +113,13 @@ def play_game(ind, opp):
         next_player = not next_player
         if board.is_game_over():
             break
+    score = material_advantage(board, col)
     if board.outcome().winner is not None:
         if board.outcome().winner == col:
-            return 1
+            return score + 10
         else:
-            return -1
-    return 0
+            return score - 10
+    return score
 
 def evaluate_individual(ind, pop2, sample_size):
     rng = np.random.default_rng()
@@ -123,7 +129,7 @@ def evaluate_individual(ind, pop2, sample_size):
         opp = sample[i]
         outcome = play_game(ind, opp)
         score += outcome
-    return score
+    return score / sample_size
 
 def evaluate_pops(pop1, pop2, sample_size):
     fits = []
@@ -154,10 +160,11 @@ def best_individual(pop1, fit1, pop2, fit2) -> keras.Model:
     best2 = max(zip(pop2, fit2), key=lambda x: x[1])
     return max(best1, best2, key=lambda x: x[1])[0]
 
-mr = 1/44328
-pop1 = gen_pop(100)
-pop2 = gen_pop(100)
+if __name__ == "__main__":
+    mr = 1/44328
+    pop1 = gen_pop(100)
+    pop2 = gen_pop(100)
 
-popfit1, popfit2 = evolve(pop1, pop2, 10, mr, True, 1000)
-best = best_individual(popfit1[0], popfit1[1], popfit2[0], popfit2[1])
-best.save("model.h5")
+    popfit1, popfit2 = evolve(pop1, pop2, 10, mr, True, 1000)
+    best = best_individual(popfit1[0], popfit1[1], popfit2[0], popfit2[1])
+    best.save("model.h5")
