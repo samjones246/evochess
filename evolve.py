@@ -63,7 +63,7 @@ def gen_pop(size):
 # Stochastic universal selection
 def next_generation(pop, fitnesses, crossover, mr):
     F = sum(fitnesses)
-    N = len(pop) * (2 if crossover else 1) 
+    N = len(pop) * (2 if crossover else 1)
     P = F/N
     rng = np.random.default_rng()
     start = rng.random() * P
@@ -71,7 +71,7 @@ def next_generation(pop, fitnesses, crossover, mr):
 
     # RWS
     new_pop = []
-    for pointer in pointers:
+    for pointer in tqdm(pointers, "Choosing parents", leave=False):
         i = 0
         while sum(fitnesses[:i+1]) < pointer:
             i += 1
@@ -83,7 +83,7 @@ def next_generation(pop, fitnesses, crossover, mr):
     if crossover:
         shuffle(new_pop, random=rng.random)
         temp = []
-        for i in range(0, len(new_pop), 2):
+        for i in tqdm(range(0, len(new_pop), 2), "Recombining and mutating", leave=False):
             p1 = new_pop[i]
             p2 = new_pop[i+1]
             child = uniform_crossover(p1, p2, mutate=True, mr=mr)
@@ -136,8 +136,12 @@ def evaluate_pops(pop1, pop2, sample_size):
 def evolve(pop1, pop2, sample_size, mr, crossover, gens):
     for gen in tqdm(range(gens), "Evolving"):
         fit1, fit2 = evaluate_pops(pop1, pop2, sample_size)
+        bar = tqdm(total=2, desc="Selecting for next generation", leave=False)
         pop1 = next_generation(pop1, fit1, crossover, mr)
+        bar.update(1)
         pop2 = next_generation(pop2, fit2, crossover, mr)
+        bar.update(1)
+        bar.close()
     fit1, fit2 = evaluate_pops(pop1, pop2, sample_size)
     return (pop1,fit1), (pop2,fit2)
 
@@ -146,7 +150,7 @@ def best_individual(pop1, fit1, pop2, fit2) -> keras.Model:
     best2 = max(zip(pop2, fit2), key=lambda x: x[1])
     return max(best1, best2, key=lambda x: x[1])[0]
 
-mr = 1/(44328 - 16 - 1880)
+mr = 1/44328
 pop1 = gen_pop(100)
 pop2 = gen_pop(100)
 
