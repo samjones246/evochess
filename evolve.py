@@ -81,7 +81,7 @@ def next_generation(pop, fitnesses, crossover, mr):
             child = mutate(pop[i], mr)
             new_pop.append(child)
     if crossover:
-        shuffle(new_pop, random=rng.random)
+        shuffle(new_pop)
         temp = []
         for i in tqdm(range(0, len(new_pop), 2), "Recombining and mutating", leave=False):
             p1 = new_pop[i]
