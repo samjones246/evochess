@@ -15,6 +15,7 @@ import controller
 import timeit
 from tqdm import tqdm
 from itertools import count
+import sys
 
 # Shift random weights by val in range [-1,1]
 
@@ -75,6 +76,7 @@ def next_generation(pop, fitnesses, crossover, mr):
         i = 0
         if sum(fitnesses) < pointer:
             print("Something went wrong")
+            sys.exit(1)
         while sum(fitnesses[:i+1]) < pointer:
             i += 1
         if crossover:
