@@ -113,13 +113,13 @@ def play_game(ind, opp):
         next_player = not next_player
         if board.is_game_over():
             break
-    score = material_advantage(board, col)
+    #score = material_advantage(board, col)
     if board.outcome().winner is not None:
         if board.outcome().winner == col:
-            return score + 10
+            return 10
         else:
-            return score - 10
-    return score
+            return 1
+    return 5
 
 def evaluate_individual(ind, pop2, sample_size):
     rng = np.random.default_rng()
@@ -129,7 +129,7 @@ def evaluate_individual(ind, pop2, sample_size):
         opp = sample[i]
         outcome = play_game(ind, opp)
         score += outcome
-    return score / sample_size
+    return score
 
 def evaluate_pops(pop1, pop2, sample_size):
     fits = []
